@@ -175,25 +175,25 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 /*__PERSONA__*/
 const PERSONA = {
   "version": 1,
-  "nombre": "Profesora Mentora",
-  "corto": "Mentora",
+  "nombre": "Alicia",
+  "corto": "Alicia",
   "subtitulo": "Una profesora digital para la formación docente, estilo 3D animado",
   "descripcion": "Un personaje digital creado con inteligencia artificial: una profesora jubilada con larga trayectoria en formación docente, pedagogía y didáctica. Conversá con ella por voz.",
   "especie": "humano",
   "agente": "agent_3801m4kmhmyeebvr66nb81xhmprd",
   "modelo": "modelo.glb",
   "vista": false,
-  "fraseDemo": "¡Hola! Soy la Profesora Mentora, un personaje digital creado para acompañarte en tu formación docente. Contame, ¿de qué te gustaría que conversemos hoy?",
+  "fraseDemo": "¡Hola! Soy Alicia, un personaje digital creado para acompañarte en tu formación docente. Contame, ¿de qué te gustaría que conversemos hoy?",
   "apariencia": {
     "piel": "#f0bc9a",
     "ojos": "#6b3f1d",
     "pelo": {
-      "color": "#6f6f76",
-      "canas": 0.55,
+      "color": "#4a1a10",
+      "canas": 0,
       "volumen": 1.0,
       "entradas": 0,
-      "largo": 0.45,
-      "rodete": true,
+      "largo": 1,
+      "rodete": false,
       "patillas": false,
       "bigote": false,
       "barba": 0
@@ -204,7 +204,7 @@ const PERSONA = {
       "nariz": 0.95,
       "mejillas": 1.1,
       "menton": 0.9,
-      "edad": 0.7,
+      "edad": 0.6,
       "sombraBarba": 0
     },
     "ropa": {
@@ -665,7 +665,7 @@ function esculpir(d, P, col){
 }
 const PIEL = {
   base: C3(AP.piel), frente: mezcla(AP.piel, '#ffffff', 0.12), mejilla: mezcla(AP.piel, '#b0452e', 0.32),
-  orbita: mezcla(AP.piel, '#3a2015', 0.32), barba: mezcla(AP.piel, '#55565c', 0.38), labio: mezcla(AP.piel, '#86302c', 0.4),
+  orbita: mezcla(AP.piel, '#3a2015', 0.32), barba: mezcla(AP.piel, '#55565c', 0.38), labio: PERSONA.estilo === 'pixar' ? mezcla(AP.piel, '#e8849a', 0.85) : mezcla(AP.piel, '#86302c', 0.4),
   sombra: mezcla(AP.piel, '#3a2015', 0.3), narina: mezcla(AP.piel, '#1a0a05', 0.65),
   boca: new THREE.Color(0x4a1717), garganta: new THREE.Color(0x0e0404)
 };
@@ -804,8 +804,8 @@ function crearPelo(){
       esp = (esp + rizo*(0.35 + 0.65*Math.max(filo, sstep(0.3, -0.1, d.z))))*m*m + (m - 0.35)*0.004;
       ox = d.x*esp; oy = d.y*esp; oz = d.z*esp;
       if (P.largo > 0){ // melena: el pelo de los costados y la nuca cae y se separa un poco de la cabeza
-        const cae = P.largo*sstep(0.03, -0.09, y)*sstep(0.035, 0.0, z)*m;
-        oy -= 0.11*cae; ox += d.x*0.012*cae; oz += d.z*0.01*cae;
+        const cae = P.largo*(PERSONA.estilo === 'pixar' ? 1.05 : 1)*sstep(0.03, -0.09, y)*sstep(0.035, 0.0, z)*m;
+        oy -= 0.11*cae; ox += d.x*0.012*cae; oz += d.z*0.01*cae; if (PERSONA.estilo === 'pixar'){ ox += 0.0085*Math.sin(y*150 + d.z*5)*cae; oz += 0.006*Math.cos(y*150 + d.x*5)*cae; }
       }
     } else if (mb >= mm){
       mTot = mb;
@@ -1357,7 +1357,10 @@ if (PERSONA.estilo === 'pixar'){ (() => {
     g.fillStyle = 'rgba(90,50,20,0.35)'; g.fillRect(0, i*h/8, w, 3); } });
   tab.wrapS = tab.wrapT = THREE.RepeatWrapping; tab.repeat.set(3, 3);
   plano(5.2, 4.2, mt(0xffffff, 0.5, { map:tab }), 0, 0, 0.3, 0, -Math.PI/2);
-  plano(5.2, 2.8, mt('#f8dfb8', 0.92), 0, 1.4, -1.8);
+  const WX = 1.2, sh = new THREE.Shape(), ho = new THREE.Path();
+  sh.moveTo(-2.6, 0); sh.lineTo(2.6, 0); sh.lineTo(2.6, 2.8); sh.lineTo(-2.6, 2.8); sh.lineTo(-2.6, 0);
+  ho.moveTo(WX - 0.55, 1.075); ho.lineTo(WX - 0.55, 2.325); ho.lineTo(WX + 0.55, 2.325); ho.lineTo(WX + 0.55, 1.075); ho.lineTo(WX - 0.55, 1.075); sh.holes.push(ho);
+  const pared = new THREE.Mesh(new THREE.ShapeGeometry(sh), mt('#f8dfb8', 0.92)); pared.position.z = -1.8; pared.receiveShadow = true; hab.add(pared);
   plano(4.2, 2.8, mt('#f2cf9f', 0.92), -2.6, 1.4, 0.3, Math.PI/2);
   plano(4.2, 2.8, mt('#f2cf9f', 0.92), 2.6, 1.4, 0.3, -Math.PI/2);
   caja(5.2, 0.95, 0.04, mt('#3f9aa0', 0.7), 0, 0.475, -1.78, 0.01);
@@ -1385,11 +1388,18 @@ if (PERSONA.estilo === 'pixar'){ (() => {
   planta(lib, 0.5, 2.38, 0, 0.8); esf(0.07, mt('#4f9d8f', 0.4), -0.5, 2.46, 0);
 
   // Ventana con cortinas y luz de la tarde
-  const WX = 1.2, mV = mt('#fff6e8', 0.5);
-  const cielo = lienzo(256, 256, (g, w, h) => { const d = g.createLinearGradient(0, 0, 0, h); d.addColorStop(0, '#7cc4ee'); d.addColorStop(1, '#d9f2ff'); g.fillStyle = d; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(255,255,255,0.92)'; for (const [x, y, r] of [[60, 160, 26], [92, 150, 34], [126, 162, 26], [196, 100, 20], [218, 96, 26]]){ g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
-    const s = g.createRadialGradient(205, 40, 2, 205, 40, 60); s.addColorStop(0, 'rgba(255,244,200,1)'); s.addColorStop(1, 'rgba(255,244,200,0)'); g.fillStyle = s; g.fillRect(0, 0, w, h); });
-  plano(1.1, 1.25, new THREE.MeshBasicMaterial({ map:cielo }), WX, 1.7, -1.795);
+  const mV = mt('#fff6e8', 0.5);
+  const cielo = lienzo(512, 256, (g, w, h) => { const d = g.createLinearGradient(0, 0, 0, h); d.addColorStop(0, '#7cc4ee'); d.addColorStop(0.7, '#d9f2ff'); g.fillStyle = d; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(255,255,255,0.92)'; for (const [x, y, r] of [[120, 90, 30], [160, 80, 40], [205, 92, 30], [380, 60, 24], [410, 56, 30]]){ g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+    const s = g.createRadialGradient(430, 30, 2, 430, 30, 70); s.addColorStop(0, 'rgba(255,244,200,1)'); s.addColorStop(1, 'rgba(255,244,200,0)'); g.fillStyle = s; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#8fcf7a'; g.beginPath(); g.ellipse(130, 270, 260, 90, 0, 0, 7); g.fill(); g.fillStyle = '#6fbf6a'; g.beginPath(); g.ellipse(400, 275, 240, 80, 0, 0, 7); g.fill(); });
+  plano(9, 4.5, new THREE.MeshBasicMaterial({ map:cielo }), WX, 2.0, -3.4);
+  caja(1.3, 0.05, 0.34, mV, WX, 1.045, -1.95, 0.02);
+  const flores = ['#e2574c', '#f6d35e', '#e07aa0', '#f2a541', '#fff3e0'];
+  [-0.38, 0, 0.38].forEach((dx, k) => { const x = WX + dx, y = 1.07, z = -1.95;
+    cil(0.07, 0.05, 0.12, mt('#d9774b', 0.8), x, y + 0.06, z); esf(0.075, mt('#58b05a', 0.6), x, y + 0.15, z, 1, 0.55, 0.8);
+    for (let i = 0; i < 7; i++){ const a = i/7*Math.PI*2, hh = 0.2 + rnd()*0.2, fx = x + Math.cos(a)*0.06*(i % 2 ? 1 : 0.5), fz = z + Math.sin(a)*0.04;
+      cil(0.004, 0.004, hh, mt('#3f9d4f', 0.6), fx, y + 0.12 + hh/2, fz); esf(0.032, mt(flores[(i + k) % 5], 0.55), fx, y + 0.12 + hh, fz, 1, 0.8, 1); } });
   caja(1.3, 0.08, 0.1, mV, WX, 2.36, -1.76, 0.03); caja(1.3, 0.08, 0.1, mV, WX, 1.04, -1.76, 0.03);
   caja(0.08, 1.4, 0.1, mV, WX - 0.6, 1.7, -1.76, 0.03); caja(0.08, 1.4, 0.1, mV, WX + 0.6, 1.7, -1.76, 0.03);
   caja(0.05, 1.3, 0.06, mV, WX, 1.7, -1.77, 0.02); caja(1.15, 0.05, 0.06, mV, WX, 1.72, -1.77, 0.02);
@@ -1425,6 +1435,12 @@ if (PERSONA.estilo === 'pixar'){ (() => {
   [[0.0, 2.2, 0.3, 0.4, '#f2a541'], [0.38, 2.12, 0.26, 0.3, '#4f9d8f']].forEach(([x, y, w, h, c]) => { caja(w, h, 0.04, mt('#fff3e0', 0.5), x, y, -1.775, 0.015); plano(w - 0.06, h - 0.06, new THREE.MeshBasicMaterial({ color:c }), x, y, -1.753); });
   sombra(0, 0, 0.5, 0.38, 0.55); sombra(-1.0, -1.45, 1.0, 0.4, 0.5); sombra(WX, -1.3, 0.95, 0.5, 0.45); sombra(0.95, -0.6, 0.35, 0.35, 0.4); sombra(2.15, -1.45, 0.4, 0.4, 0.4); sombra(-2.2, -1.4, 0.35, 0.35, 0.4);
 
+  const pantalon = mt('#3b4a6b', 0.7), zapato = mt('#7a3b24', 0.45);
+  for (const s of [-1, 1]){
+    const pierna = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.058, 0.6, 24), pantalon); pierna.position.set(s*0.095, 0.34, 0); pierna.castShadow = true; pierna.receiveShadow = true; figura.raiz.add(pierna);
+    const pie = new THREE.Mesh(new THREE.SphereGeometry(0.06, 20, 14), zapato); pie.scale.set(0.9, 0.55, 1.7); pie.position.set(s*0.095, 0.035, 0.05); pie.castShadow = true; figura.raiz.add(pie);
+  }
+  M.labio.color.set(0xe59aa6); M.pelo.sheenColor.set(mezcla(AP.pelo.color, '#ffb090', 0.4));
   // Luz cálida de cine animado
   luzClave.color.set(0xfff0d6); luzClave.intensity = 3.0; contraluz.color.set(0xffb98c); contraluz.intensity = 1.5;
   scene.add(new THREE.AmbientLight(0xffe6cf, 0.6)); renderer.toneMappingExposure = 1.12;
