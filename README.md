@@ -1,4 +1,4 @@
-# Mentora | Una profesora digital para la formación docente, estilo 3D animado
+# Alicia | Una profesora digital para la formación docente, estilo 3D animado
 
 Un personaje digital creado con inteligencia artificial: una profesora jubilada con larga trayectoria en formación docente, pedagogía y didáctica. Conversá con ella por voz.
 
