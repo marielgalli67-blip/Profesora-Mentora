@@ -1862,6 +1862,16 @@ async function cargarSDK(){
   }
   throw new Error('sdk');
 }
+function motivoFallo(t){
+  const s = String(t || '').toLowerCase();
+  if (/quota|credit|crédit/.test(s)) return ['Sin créditos en ElevenLabs.', 'Se agotaron los créditos de la cuenta. Esperá a que se renueven o agregá créditos; mientras tanto podés usar «Escucharlo sin conectarse».'];
+  if (/concurren|too many|rate limit|limit exceeded/.test(s)) return ['ElevenLabs alcanzó su límite de conversaciones simultáneas.', 'Esperá unos minutos y volvé a tocar «Hablar».'];
+  if (/not.?found|404/.test(s)) return ['No se encontró el agente.', 'Revisá que el ID del agente esté bien escrito.'];
+  if (/auth|origin|allowlist|private|permission|forbidden|401|403/.test(s)) return ['El agente no permite esta conexión.', 'En ElevenLabs, pestaña Security: dejalo público y, si usás lista de dominios, agregá el de esta página.'];
+  if (s === 'sdk') return ['No cargó la librería de ElevenLabs.', 'Revisá tu conexión a internet y recargá la página.'];
+  return ['No se pudo conectar con el agente.', s ? 'ElevenLabs informó: ' + String(t).slice(0, 140) : 'Revisá tu conexión y volvé a tocar «Hablar».'];
+}
+function avisarFallo(t){ console.warn('Fallo de conexión:', t); const [a, b] = motivoFallo(t); subtitular(a, b); }
 async function iniciarConversacion(){
   if (!CONFIG.agente){ subtitular('Este humano digital todavía no tiene agente de voz.', 'Probá «Escucharlo sin conectarse», o cargá el ID del agente en el Creador.'); return; }
   try { speechSynthesis.cancel(); } catch {} estado.demoHasta = 0; cortarLinea();
@@ -1874,8 +1884,8 @@ async function iniciarConversacion(){
       agentId: CONFIG.agente,
       connectionType: 'websocket',
       onConnect: () => { ponerModo('listening'); ui.hablar.setAttribute('aria-pressed', 'true'); ui.hablar.textContent = 'Terminar'; },
-      onDisconnect: () => terminarUI(),
-      onError: (e) => { console.error(e); subtitular(`La conexión con ${PERSONA.corto} se cortó.`, 'Revisá tu internet y volvé a tocar «Hablar».'); },
+      onDisconnect: (d) => { const msg = String(d?.message || d?.context?.reason || d?.closeReason || ''), cod = d?.closeCode ?? d?.context?.code; terminarUI(); if (d?.reason === 'error' || (cod && cod !== 1000)) avisarFallo(msg || 'error ' + cod); },
+      onError: (e) => { console.error(e); avisarFallo(typeof e === 'string' ? e : e?.message); },
       onModeChange: ({ mode }) => ponerModo(mode === 'speaking' ? 'speaking' : 'listening'),
       onConversationMetadata: (m) => { if (m?.agent_output_audio_format) linea.formato = m.agent_output_audio_format; },
       onAudioAlignment: (al) => { linea.pendiente = al; },
@@ -1885,7 +1895,7 @@ async function iniciarConversacion(){
     });
   } catch (e){
     console.error(e); terminarUI();
-    subtitular('No se pudo conectar con el agente.', e.message === 'sdk' ? 'No cargó la librería de ElevenLabs: revisá la conexión.' : 'Revisá que el agente sea público en ElevenLabs (pestaña Security).');
+    avisarFallo(e.message);
   } finally { ui.hablar.disabled = false; }
 }
 function terminarUI(){ estado.conv = null; cortarLinea(); audio.an = null; ponerModo('inactivo'); ui.hablar.setAttribute('aria-pressed', 'false'); ui.hablar.textContent = 'Hablar'; }
